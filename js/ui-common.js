@@ -1,5 +1,7 @@
 // Shared UI helpers. DOM access only inside functions so this imports cleanly in Node.
 
+export const VERSION = '0.1.0';
+
 const MINUS = '−';
 
 export function fmt1(v) {
