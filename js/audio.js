@@ -33,11 +33,18 @@ function fail(code, message, cause) {
   return e;
 }
 
-function mapError(err) {
-  if (err && err.code) return err;
+const OWN_CODES = ['denied', 'unsupported', 'failed'];
+
+// DOMExceptions carry numeric legacy codes (SecurityError 18, NotFoundError 8, ...), so only a string
+// code from this module counts as already mapped.
+export function mapError(err) {
+  if (err && typeof err.code === 'string' && OWN_CODES.includes(err.code)) return err;
   const name = err && err.name;
   if (name === 'NotAllowedError' || name === 'SecurityError' || name === 'PermissionDeniedError') {
     return fail('denied', (err && err.message) || 'Microphone access denied', err);
+  }
+  if (name === 'NotFoundError' || name === 'OverconstrainedError') {
+    return fail('failed', 'No microphone found', err);
   }
   return fail('failed', (err && err.message) || String(err), err);
 }
@@ -183,17 +190,30 @@ async function doStart(opts, gen) {
 
   // Synchronous from here: no await between connecting the source and publishing state.
   let trackSettings = null;
-  if (useTone) {
-    tone = makeTone(c);
-    source = tone.mixer;
-  } else {
-    stream = mic;
-    source = c.createMediaStreamSource(mic);
-    const track = mic.getAudioTracks()[0];
-    trackSettings = track && track.getSettings ? track.getSettings() : null;
+  try {
+    if (useTone) {
+      tone = makeTone(c);
+      source = tone.mixer;
+    } else {
+      stream = mic;
+      source = c.createMediaStreamSource(mic);
+      const track = mic.getAudioTracks()[0];
+      trackSettings = track && track.getSettings ? track.getSettings() : null;
+    }
+    source.connect(node);
+    source.connect(analyser);
+  } catch (e) {
+    // Undo the partial setup so the mic indicator goes off and the next start begins clean.
+    stopStream(mic);
+    stream = null;
+    if (source) {
+      try { source.disconnect(); } catch { /* ignore */ }
+      source = null;
+    }
+    teardownTone();
+    if (gen === generation) Promise.resolve(c.suspend()).catch(() => {});
+    throw mapError(e);
   }
-  source.connect(node);
-  source.connect(analyser);
   isRunning = true;
   lastInfo = { sampleRate: c.sampleRate, source: useTone ? 'tone' : 'mic', trackSettings };
   emit(sourceSubs, source, c);
