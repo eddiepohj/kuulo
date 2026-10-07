@@ -70,6 +70,8 @@ function showTab(name) {
   }
 }
 for (const b of tabButtons) b.addEventListener('click', () => showTab(b.dataset.tab));
+// Screens can ask for another tab (e.g. the Meter's CAL pill opens Calibrate).
+document.addEventListener('kuulo:tab', (e) => { if (screens[e.detail]) showTab(e.detail); });
 showTab('meter');
 
 // Start overlay
