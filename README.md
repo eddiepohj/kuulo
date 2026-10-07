@@ -1,6 +1,6 @@
 # kuulo
 
-Personal sound level meter and spectrum analyser, installed to the iPhone home screen as a web app (PWA). For everyday curiosity ("how loud is it", "what is that tone"). Single user, no accounts, no analytics, no recording. Works offline after the first load.
+Personal sound level meter and spectrum analyser, installed to the iPhone home screen as a web app (PWA). For everyday curiosity ("how loud is it", "what is that tone"). Single user, no accounts, no analytics, no recording. Designed to work offline after the first load (check 5 below).
 
 - The Meter screen shows an A, C or Z weighted level with Fast or Slow response, Leq, Max, Min and a 60 s history.
 - The Spectrum screen shows a live waterfall and live bars, with a peak frequency readout.
@@ -27,7 +27,7 @@ Open http://localhost:8124/?tone to use a test tone instead of the microphone (4
 
 ## Deploy
 
-Push to `main`; GitHub Pages serves it. Bump `CACHE` in `sw.js` on each release so installed copies update.
+Push to `main`; GitHub Pages serves it. On each release bump both `CACHE` in `sw.js` and `VERSION` in `js/ui-common.js`. Bumping `CACHE` replaces the offline copy and deletes the old one. The Calibrate footer shows `VERSION`, so you can see which build the phone runs.
 
 ## On-device checks
 
@@ -37,7 +37,7 @@ Run on the installed app:
 2. A whistle shows as a clear trace in the waterfall and in the peak readout.
 3. Calibrate against a reference. The offset and floor survive a force-quit.
 4. The microphone indicator turns off when the app goes to the background.
-5. It works in airplane mode after the first load.
+5. Turn on airplane mode, launch from the home screen, tap Start: the meter runs.
 6. Recorded, not pass or fail: phone against reference at a second steady level 10 to 20 dB away from the calibration level.
 
 Microphone spike (do this first, spec section 12): iOS may keep voice processing (auto-gain, noise suppression) even though the app asks for it to be off. On first launch, open Calibrate and read the microphone line in the footer (sample rate and AGC, NS and EC shown as on, off or ?). Then play a steady sound and step it by about 20 dB. The Meter should step with it, not pump up and down. If it pumps, note it here and decide what to do.

@@ -246,11 +246,12 @@ export function init(section, { store, audio }) {
     }
   });
 
-  // A new start is a fresh measurement: reset the worklet stats and everything shown with them.
-  // `held` is left as is (a hold survives a restart; Resume then shows the new measurement).
+  // A new start is a fresh measurement: reset the worklet stats and everything shown with them,
+  // and release Hold (otherwise the meter would keep dashes after the restart).
   audio.onSource(() => {
     audio.resetMeter();
     clearStats();
+    held = false;
   });
 
   // Settings in

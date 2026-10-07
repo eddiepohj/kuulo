@@ -96,7 +96,7 @@ const MARKUP = `
 </div>
 
 <div class="cal-footer">
-  <div><span data-r="version"></span> · <a href="${REPO_URL}" target="_blank" rel="noopener">Source code</a> · AGPL-3.0</div>
+  <div><span data-r="version"></span> · <a href="${REPO_URL}" target="_blank" rel="noopener">Source code</a> · AGPL-3.0-or-later</div>
   <div>Not a certified sound level meter. Readings depend on the phone mic and the calibration.</div>
   <div class="mono" data-r="diag"></div>
 </div>
