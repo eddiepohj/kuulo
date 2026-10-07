@@ -142,9 +142,10 @@ export function init(section, { store, audio }) {
     r.zfloor.style.width = floor == null ? '0%' : `${clamp01((floor - scale.lo) / span) * 100}%`;
     r.zceil.style.width = `${clamp01((scale.hi - ceil) / span) * 100}%`;
     setText(r.capfloor, floor == null ? 'floor not measured' : `below ${fmt0(floor)}: mic noise`);
-    setText(r.capceil, `over ${fmt0(ceil)}: clipping`);
+    setText(r.capceil, `over ${fmt0(ceil)}${cal ? '' : ' dBFS'}: clipping`);
 
-    setText(r.histcap, `${fmt0(scale.hLo)}–${fmt0(scale.hHi)} ${cal ? 'dB' : 'dBFS'}`);
+    // A dash between negative numbers reads as a minus sign, so spell the uncalibrated range out.
+    setText(r.histcap, cal ? `${fmt0(scale.hLo)}–${fmt0(scale.hHi)} dB` : `${fmt0(scale.hLo)} to ${fmt0(scale.hHi)} dBFS`);
     setText(r.leqname, `L${cfg.meter.weighting}EQ`);
     setText(r.unit, unitLabel(cfg.meter.weighting, off));
     setText(r.cal, cal ? `CAL ${fmtSigned(off)}` : 'UNCAL');
@@ -245,9 +246,11 @@ export function init(section, { store, audio }) {
     }
   });
 
+  // A new start is a fresh measurement: reset the worklet stats and everything shown with them.
+  // `held` is left as is (a hold survives a restart; Resume then shows the new measurement).
   audio.onSource(() => {
-    t0 = now();
-    frozenMs = 0;
+    audio.resetMeter();
+    clearStats();
   });
 
   // Settings in

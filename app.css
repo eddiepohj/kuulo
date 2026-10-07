@@ -225,8 +225,9 @@ h1, h2, p { margin: 0; }
 .meter-caps .over { color: var(--over); text-align: right; }
 
 .meter-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; padding: 14px 20px; }
-.meter-tiles .tile { min-width: 0; }
-.meter-tiles .tile-value { white-space: nowrap; overflow: hidden; }
+.meter-tiles .tile { min-width: 0; padding-left: 8px; padding-right: 8px; }
+/* 17 px mono is 10.2 px per character: "−100.0" (6 chars, 61.2 px) fits the ~61 px inner width at 375 px and up. */
+.meter-tiles .tile-value { font-size: 17px; white-space: nowrap; overflow: hidden; }
 
 .meter-hist { padding: 4px 20px 0; }
 .meter-hist-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); letter-spacing: 0.06em; }
