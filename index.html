@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F1113">
+<meta name="color-scheme" content="dark light">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="kuulo">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="app.css">
+<title>kuulo</title>
+</head>
+<body>
+<main>
+  <section class="screen active" id="screen-meter" aria-label="Meter"></section>
+  <section class="screen" id="screen-spectrum" aria-label="Spectrum"></section>
+  <section class="screen" id="screen-calibrate" aria-label="Calibrate"></section>
+</main>
+
+<nav class="tabbar" aria-label="Screens">
+  <button type="button" data-tab="meter" aria-current="page">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 16a8 8 0 0 1 16 0"/><path d="M12 16l4-5"/></svg>
+    <span>METER</span>
+  </button>
+  <button type="button" data-tab="spectrum">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 19v-6"/><path d="M9 19V8"/><path d="M13 19v-9"/><path d="M17 19V5"/><path d="M21 19v-4"/></svg>
+    <span>SPECTRUM</span>
+  </button>
+  <button type="button" data-tab="calibrate">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10"/><path d="M18 7h2"/><circle cx="16" cy="7" r="2"/><path d="M4 17h2"/><path d="M10 17h10"/><circle cx="8" cy="17" r="2"/></svg>
+    <span>CALIBRATE</span>
+  </button>
+</nav>
+
+<div class="overlay" id="start" role="dialog" aria-modal="true" aria-labelledby="start-title">
+  <div class="overlay-inner">
+    <div class="wordmark" id="start-title">kuulo</div>
+    <button type="button" class="btn btn-primary" id="start-btn">Tap to start</button>
+    <p class="overlay-note" id="start-msg">Uses the microphone. Nothing is recorded or sent.</p>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
