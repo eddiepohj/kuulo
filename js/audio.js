@@ -7,6 +7,7 @@
 import { design } from './weighting.js';
 
 const FFT_SIZE = 16384;
+const RESUME_TIMEOUT_MS = 2500;
 const WORKLET_URL = new URL('./meter-worklet.js', import.meta.url).href;
 
 let ctx = null;
@@ -177,7 +178,6 @@ async function doStart(opts, gen) {
   const micP = useTone ? Promise.resolve(null) : openMic();
 
   const [g, m] = await Promise.allSettled([graphP, micP]);
-  await resumeP;
   const mic = m.status === 'fulfilled' ? m.value : null;
   if (g.status === 'rejected' || m.status === 'rejected' || gen !== generation) {
     stopStream(mic);
@@ -186,6 +186,20 @@ async function doStart(opts, gen) {
     if (g.status === 'rejected') throw mapError(g.reason);
     if (m.status === 'rejected') throw mapError(m.reason);
     throw fail('failed', 'Start cancelled');
+  }
+
+  // WebKit can hold resume() while the audio session is interrupted (call, Siri, another app), so bound the wait.
+  let timer;
+  await Promise.race([resumeP, new Promise((resolve) => { timer = setTimeout(resolve, RESUME_TIMEOUT_MS); })]);
+  clearTimeout(timer);
+  if (gen !== generation) {
+    stopStream(mic); // stop() ran while waiting; it already suspended the context
+    throw fail('failed', 'Start cancelled');
+  }
+  if (c.state !== 'running') {
+    stopStream(mic);
+    Promise.resolve(c.suspend()).catch(() => {});
+    throw fail('failed', 'Audio is busy (call or another app). Tap again.');
   }
 
   // Synchronous from here: no await between connecting the source and publishing state.
@@ -200,6 +214,7 @@ async function doStart(opts, gen) {
       const track = mic.getAudioTracks()[0];
       trackSettings = track && track.getSettings ? track.getSettings() : null;
     }
+    post({ type: 'restart' }); // fresh meter state (the context was suspended; filters and levels are stale)
     source.connect(node);
     source.connect(analyser);
   } catch (e) {

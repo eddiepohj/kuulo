@@ -1,4 +1,4 @@
-const CACHE = 'kuulo-v1';
+const CACHE = 'kuulo-v2';
 const SHELL = [
   './',
   './index.html',
@@ -50,11 +50,12 @@ self.addEventListener('fetch', (event) => {
 
   // Network-first: try the network, refresh the cache, fall back to the cache when offline.
   event.respondWith(
-    fetch(req)
+    // no-cache: revalidate with the server instead of reusing the HTTP cache (GitHub Pages max-age=600).
+    fetch(req, { cache: 'no-cache' })
       .then((res) => {
         if (res && res.status === 200) {
           const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(req, copy));
+          event.waitUntil(caches.open(CACHE).then((c) => c.put(req, copy)));
         }
         return res;
       })

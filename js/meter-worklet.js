@@ -86,6 +86,27 @@ export function resetStats(state) {
   state.elapsed = 0;
 }
 
+/**
+ * Fresh start after the audio source changed: clear everything resetStats keeps
+ * (time-weighted level, filter memory, 1 s accumulators, clip hold) plus the stats.
+ * Allocation-free.
+ */
+export function restart(state) {
+  state.mem.fill(0);
+  state.memA.fill(0);
+  state.ms = 0;
+  state.level = MIN_DBFS;
+  state.sinceClip = state.sampleRate; // clipped === false
+  state.sinceReadout = 0;
+  state.secSum = 0;
+  state.secSumA = 0;
+  state.secN = 0;
+  state.secondPending = false;
+  state.secondLeq = MIN_DBFS;
+  state.secondLeqA = MIN_DBFS;
+  resetStats(state);
+}
+
 // Direct form I cascade over a flat coefficient/memory pair; no allocation.
 function cascade(coef, mem, x) {
   let v = x;
@@ -183,6 +204,7 @@ if (typeof registerProcessor === 'function') {
         if (m.type === 'sections') setSections(this.state, m.sections);
         else if (m.type === 'response') setResponse(this.state, m.response);
         else if (m.type === 'reset') resetStats(this.state);
+        else if (m.type === 'restart') restart(this.state);
       };
     }
 

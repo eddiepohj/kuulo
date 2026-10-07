@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { MIN_DBFS, toDbfs, createMeterState, processBlock, readout, setResponse, resetStats } from '../js/meter-worklet.js';
+import { MIN_DBFS, toDbfs, createMeterState, processBlock, readout, setResponse, resetStats, restart } from '../js/meter-worklet.js';
 import { design } from '../js/weighting.js';
 
 const FS = 48000;
@@ -116,4 +116,67 @@ test('setResponse switches τ', () => {
   const a = run(s, 1, () => 0).level;
   const b = run(s, 1, () => 0).level;
   close(a - b, 4.34, 0.25, 'slow decay per second');
+});
+
+// Like run(), but also returns the first secondLeq/secondLeqA seen and the highest level over the run.
+function runWatch(state, seconds, gen, t0 = 0) {
+  const n = Math.round(seconds * FS);
+  const out = { firstSecondLeq: undefined, firstSecondLeqA: undefined, peakLevel: MIN_DBFS };
+  for (let i = 0; i < n; i += 128) {
+    const blk = new Float32Array(128);
+    for (let j = 0; j < 128; j++) blk[j] = gen((t0 + i + j) / FS);
+    if (processBlock(state, blk)) {
+      const r = readout(state);
+      if (r.level > out.peakLevel) out.peakLevel = r.level;
+      if (r.secondLeq !== undefined && out.firstSecondLeq === undefined) {
+        out.firstSecondLeq = r.secondLeq;
+        out.firstSecondLeqA = r.secondLeqA;
+      }
+    }
+  }
+  out.last = readout(state);
+  return out;
+}
+
+const QUIET = 20 * Math.log10(0.003); // dBFS of a 0.003 amplitude sine
+
+test('restart: nothing from the loud session leaks into the quiet one', () => {
+  const s = createMeterState({ sampleRate: FS, sections: [], sectionsA: [], response: 'F' });
+  run(s, 2, sine(0.3));
+  restart(s);
+  const w = runWatch(s, 2, sine(0.003));
+  close(w.last.max, QUIET, 0.5, 'max after restart');
+  close(w.firstSecondLeq, QUIET, 0.5, 'first secondLeq after restart');
+  close(w.firstSecondLeqA, QUIET, 0.5, 'first secondLeqA after restart');
+  assert.equal(w.last.clipped, false);
+});
+
+test('restart: clears a clip flag and the 1 s accumulators mid-second', () => {
+  const s = zMeter();
+  run(s, 1.5, sine(1)); // clipping, half a second into the next 1 s window
+  restart(s);
+  const r = readout(s);
+  assert.equal(r.clipped, false);
+  assert.equal(r.level, MIN_DBFS);
+  assert.equal(s.secN, 0);
+  assert.equal(s.secondPending, false);
+});
+
+test('restart: Slow response does not decay from the old loud level', () => {
+  const s = createMeterState({ sampleRate: FS, sections: [], sectionsA: [], response: 'S' });
+  run(s, 2, sine(0.3));
+  restart(s);
+  const early = runWatch(s, 0.5, sine(0.003));
+  // Starts from silence and rises toward the quiet level; never above it (a ghost would sit near −10 dBFS).
+  assert.ok(early.peakLevel <= QUIET + 0.5, `peak ${early.peakLevel}`);
+  const late = runWatch(s, 3, sine(0.003), Math.round(0.5 * FS));
+  close(late.last.level, QUIET, 0.5, 'Slow level after 3.5 s');
+});
+
+test('without restart the same sequence would keep the loud level (guards the test above)', () => {
+  const s = createMeterState({ sampleRate: FS, sections: [], sectionsA: [], response: 'S' });
+  run(s, 2, sine(0.3));
+  resetStats(s);
+  const early = runWatch(s, 0.5, sine(0.003));
+  assert.ok(early.peakLevel > QUIET + 10, `peak ${early.peakLevel}`);
 });
