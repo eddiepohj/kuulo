@@ -1,0 +1,16 @@
+kuulo
+Copyright 2026 Edvard Pohjavirta
+
+Licensed under the GNU Affero General Public License v3.0 or later (see LICENSE).
+Source code: https://github.com/eddiepohj/kuulo
+
+This product includes third-party software and fonts:
+
+- audioMotion-analyzer 4.5.4, vendor/audioMotion-analyzer.js
+  Copyright Henrique Avila Vianna. AGPL-3.0-or-later.
+  https://github.com/hvianna/audioMotion-analyzer
+  Included unmodified.
+
+- IBM Plex Mono and IBM Plex Sans Condensed, fonts/*.woff2
+  Copyright 2017 IBM Corp. SIL Open Font License 1.1 (fonts/OFL.txt).
+  Files taken from the @fontsource packages, version 5.3.0.
