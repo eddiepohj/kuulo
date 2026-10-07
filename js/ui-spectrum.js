@@ -16,6 +16,7 @@ const LN_MIN = Math.log(MIN_HZ);
 const LN_SPAN = Math.log(MAX_HZ) - LN_MIN;
 const MIN_DB = -110; // audioMotion's dBFS range: bar value 0..1 spans these
 const MAX_DB = -20;
+const TONE_COMP_DB = 13.55; // Blackman coherent gain × one-sided amplitude: a pure tone's peak band reads like the Meter
 const NOMINAL_OFFSET = 100; // uncalibrated waterfall: -90..-30 dBFS maps onto the 10..70 colour scale
 const ROWS = 120; // 12 s of history at one row per 100 ms
 const ROW_MS = 100;
@@ -182,7 +183,7 @@ export function init(section, { store, audio }) {
   function paintRow(bars) {
     if (!wfW) sizeWaterfall();
     if (!wfW) return;
-    const off = cfg.offsetDb ?? NOMINAL_OFFSET;
+    const off = (cfg.offsetDb ?? NOMINAL_OFFSET) + TONE_COMP_DB;
     const range = MAX_DB - MIN_DB;
     wfCtx.drawImage(r.wf, 0, 0, wfW, wfH - rowPx, 0, rowPx, wfW, wfH - rowPx);
     row32.fill(lut32[0], 0, wfW);
@@ -307,9 +308,14 @@ export function init(section, { store, audio }) {
       peakDbfs = null;
     }
 
-    // Y labels (Bars view): five evenly spaced values, top to bottom, offset applied.
+    // Y labels (Bars view): every 20 dB, at their true height in the compensated, offset range.
+    const shift = TONE_COMP_DB + (off ?? 0);
+    const top = MAX_DB + shift;
+    const bottom = MIN_DB + shift;
     let yHtml = '';
-    for (let i = 0; i < 5; i++) yHtml += `<span>${fmt0(MAX_DB - ((MAX_DB - MIN_DB) * i) / 4 + (off ?? 0))}</span>`;
+    for (let v = Math.floor(top / 20) * 20; v >= bottom; v -= 20) {
+      yHtml += `<span style="top: ${(((top - v) / (top - bottom)) * 100).toFixed(2)}%">${fmt0(v)}</span>`;
+    }
     if (r.ycol.dataset.key !== yHtml) {
       r.ycol.innerHTML = yHtml;
       r.ycol.dataset.key = yHtml;
@@ -356,7 +362,7 @@ export function init(section, { store, audio }) {
     setText(r.note, hz == null ? 'no clear tone' : formatNote(hz));
 
     const db = live ? peakDbfs : null;
-    const dbText = db == null ? DASH : `≈ ${fmt1(db + (cfg.offsetDb ?? 0))}`;
+    const dbText = db == null ? DASH : `≈ ${fmt1(db + TONE_COMP_DB + (cfg.offsetDb ?? 0))}`;
     setText(r.pdb, dbText);
     setLen(r.pdb, dbText);
   }

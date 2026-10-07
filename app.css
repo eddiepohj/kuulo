@@ -266,16 +266,15 @@ h1, h2, p { margin: 0; }
 .sp-plot { --sp-ground: #0F1113; --sp-edge: #22262B; padding: 18px 20px 0; }
 .sp-row { display: flex; gap: 6px; }
 .sp-ycol {
-  display: flex;
+  position: relative;
   flex: none;
-  flex-direction: column;
-  justify-content: space-between;
   width: 28px;
   font-family: var(--font-mono);
   font-size: 10px;
   color: var(--muted);
   text-align: right;
 }
+.sp-ycol span { position: absolute; right: 0; transform: translateY(-50%); }
 .sp-plot[data-view="fall"] .sp-ycol span { visibility: hidden; }
 .sp-am {
   position: relative;
